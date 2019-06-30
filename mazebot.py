@@ -5,12 +5,10 @@ import sys
 import copy
 import requests
 import random
-from multiprocessing import cpu_count, Pool
 from pprint import pprint
 
 LOGIN = "netromdk"
 URL = "https://api.noopschallenge.com"
-MAX_TRIES = 10
 DEBUG = 1
 
 def build_url(url):
@@ -170,32 +168,6 @@ def random_maze():
     return None
   return Maze(data)
 
-def solve_maze(maze):
-  if maze.solve():
-    return maze
-  return None
-
-def async_solve(maze):
-  threads = cpu_count()
-  mazes = [maze] + [maze.clone() for x in range(threads - 1)]
-
-  pool = Pool(threads)
-  results = []
-  for m in pool.imap(solve_maze, mazes):
-    if m:
-      results.append(m)
-
-  if len(results) == 0:
-    print("No results! Stopping..")
-    return None
-
-  # Pick the shortest solution of the solved mazes.
-  maze = min(results, key=lambda m: m.steps())
-  if maze.check():
-    return maze
-
-  return None
-
 def do_random():
   maze = random_maze()
   if not maze:
@@ -203,7 +175,8 @@ def do_random():
     exit(1)
 
   print("Trying to solve {}^2 maze..".format(maze.size()))
-  async_solve(maze)
+  if maze.solve():
+    maze.check()
 
 def do_race():
   data = post_json(build_url("/mazebot/race/start"), {"login": LOGIN})
@@ -222,17 +195,11 @@ def do_race():
 
     maze = Maze(data)
     print("Trying to solve {}^2 maze..".format(maze.size()))
-
-    tries = 0
-    while tries < MAX_TRIES:
-      res = async_solve(maze)
-      if not res:
-        tries += 1
-        print("Could not solve or no next maze, attempt {} of {}".format(tries, MAX_TRIES))
-      else:
-        stage += 1
-        print("Solved stage {}".format(stage))
-        nextMaze = res.next()
+    if maze.solve() and maze.check():
+      stage += 1
+      print("Solved stage {}".format(stage))
+      nextMaze = maze.next()
+      if nextMaze is None:
         break
 
 if __name__ == "__main__":
