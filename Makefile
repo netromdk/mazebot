@@ -13,3 +13,9 @@ dist-clean: clean clean-venv
 
 update-requirements: setup
 	.venv/bin/pip freeze > requirements.txt
+
+random:
+	.venv/bin/python ./mazebot.py random
+
+race:
+	.venv/bin/python ./mazebot.py race
