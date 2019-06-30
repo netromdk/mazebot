@@ -148,10 +148,15 @@ class Maze:
     data = post_json(build_url(self.__data["mazePath"]), {"directions": self.__solution})
     if not data:
       return False
-    if "result" in data and data["result"] == "success":
-      pprint(data)
-      if "nextMaze" in data:
-        self.__next = data["nextMaze"]
+    if "result" in data:
+      if data["result"] == "success":
+        pprint(data)
+        if "nextMaze" in data:
+          self.__next = data["nextMaze"]
+      elif data["result"] == "finished":
+        self.__next = None
+        if "certificate" in data:
+          print("Certificate: {}{}".format(URL, data["certificate"]))
       return True
     return False
 
