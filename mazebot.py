@@ -3,7 +3,6 @@
 
 import sys
 import requests
-import random
 from pprint import pprint
 
 LOGIN = "netromdk"
@@ -51,9 +50,7 @@ class Maze:
     self.__size = len(self.__map[0])
     self.__start = self.__data["startingPosition"]
     self.__pos = self.__start
-    self.__prev_pos = self.__pos
     self.__end = self.__data["endingPosition"]
-    self.__steps = 0
     self.__solved = False
     self.__next = None
     self.__was_here = []  # Positions already visited.
@@ -78,12 +75,13 @@ class Maze:
   def __current_square(self):
     return self.__get(self.__pos)
 
-  # Remove reduntant steps.
+  # Remove redundant steps.
   def __truncate(self):
     s = "".join(self.__solution)
     while True:
       s0 = s.replace("NS", "").replace("SN", "").replace("EW", "").replace("WE", "")
-      if s0 == s: break
+      if s0 == s:
+        break
       s = s0
     self.__solution = s
 
@@ -118,6 +116,7 @@ class Maze:
       return True
 
     return False
+
   def size(self):
     return self.__size
 
@@ -132,14 +131,6 @@ class Maze:
 
   def solved(self):
     return self.__solved
-
-  def steps(self):
-    if not self.solved():
-      return 0
-    return len(self.solution())
-
-  def solution(self):
-    return self.__solution
 
   def next(self):
     return self.__next
