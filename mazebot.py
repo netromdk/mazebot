@@ -163,7 +163,7 @@ class Maze:
 def random_maze():
   # # Accepted sizes: 10, 20, 30, 40, 60, 100, 120, 150, and 200
   minSize = 10
-  maxSize = 100
+  maxSize = 200
   data = get_json(build_url("/mazebot/random?minSize={}&maxSize={}".format(minSize, maxSize)))
   if not data:
     return None
