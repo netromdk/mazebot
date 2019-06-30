@@ -47,16 +47,20 @@ def post_json(url, data):
 class Maze:
   def __init__(self, data):
     self.__data = data
-    self.__map = data["map"]
+    self.__reset()
+
+  def __reset(self):
+    self.__map = self.__data["map"]
     self.__size = len(self.__map[0])
-    self.__start = data["startingPosition"]
+    self.__start = self.__data["startingPosition"]
     self.__pos = self.__start
     self.__prev_pos = self.__pos
-    self.__end = data["endingPosition"]
-    self.__solution = []
+    self.__end = self.__data["endingPosition"]
     self.__steps = 0
     self.__solved = False
     self.__next = None
+    self.__was_here = []  # Positions already visited.
+    self.__solution = []
 
   def __get(self, pos):
     row = pos[0]
@@ -71,24 +75,11 @@ class Maze:
     # onwards.
     return square == ' ' or square == 'B' or square == 'A'
 
+  def __can_go_pos(self, pos):
+    return self.__can_go(self.__get(pos))
+
   def __current_square(self):
     return self.__get(self.__pos)
-
-  def __advance(self):
-    candidates = [([self.__pos[0], self.__pos[1] - 1], 'N'),
-                  ([self.__pos[0] + 1, self.__pos[1]], 'E'),
-                  ([self.__pos[0], self.__pos[1] + 1], 'S'),
-                  ([self.__pos[0] - 1, self.__pos[1]], 'W')]
-    (pos, dir) = random.choice(candidates)
-
-    square = self.__get(pos)
-    if DEBUG > 2:
-      print("try", dir, pos, square)
-    if self.__can_go(square):
-      self.__prev_pos = self.__pos
-      self.__pos = pos
-      self.__solution.append(dir)
-      self.__steps += 1
 
   # Remove reduntant steps.
   def __truncate(self):
@@ -99,22 +90,48 @@ class Maze:
       s = s0
     self.__solution = s
 
+  # Based on https://en.wikipedia.org/wiki/Maze_solving_algorithm#Recursive_algorithm
+  def __recursive_solve(self, pos):
+    if pos == self.__end:
+      return True
+
+    if not self.__can_go_pos(pos) or pos in self.__was_here:
+      return False
+
+    self.__was_here.append(pos)
+
+    # If not on the left edge, go west.
+    if pos[0] != 0 and self.__recursive_solve([pos[0] - 1, pos[1]]):
+      self.__solution.insert(0, "W")
+      return True
+
+    # If not on right edge, go east.
+    if pos[0] != self.__size - 1 and self.__recursive_solve([pos[0] + 1, pos[1]]):
+      self.__solution.insert(0, "E")
+      return True
+
+    # If not on top edge, go north.
+    if pos[1] != 0 and self.__recursive_solve([pos[0], pos[1] - 1]):
+      self.__solution.insert(0, "N")
+      return True
+
+    # If not on bottom edge, go south.
+    if pos[1] != self.__size - 1 and self.__recursive_solve([pos[0], pos[1] + 1]):
+      self.__solution.insert(0, "S")
+      return True
+
+    return False
   def size(self):
     return self.__size
 
   def solve(self):
-    while self.__pos != self.__end:
-      if DEBUG > 2:
-        square = self.__current_square()
-        print("On '{}' ({}), {} steps taken".format(square, self.__pos, self.__steps))
-      self.__advance()
-
+    self.__solved = self.__recursive_solve(self.__start)
     self.__truncate()
+
     if DEBUG > 2:
       print("Solution:", self.__solution)
     print("Steps:", len(self.__solution))
-    self.__solved = True
-    return True
+    return self.__solved
 
   def solved(self):
     return self.__solved
@@ -219,6 +236,8 @@ def do_race():
         break
 
 if __name__ == "__main__":
+  sys.setrecursionlimit(4096)
+
   if len(sys.argv) != 2:
     print("Usage: {} <mode>".format(sys.argv[0]))
     print("Modes:")
