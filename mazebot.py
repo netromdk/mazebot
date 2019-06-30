@@ -2,7 +2,6 @@
 # Solution to the Mazebot: https://noopschallenge.com/challenges/mazebot
 
 import sys
-import copy
 import requests
 import random
 from pprint import pprint
@@ -155,9 +154,6 @@ class Maze:
         self.__next = data["nextMaze"]
       return True
     return False
-
-  def clone(self):
-    return copy.deepcopy(self)
 
 def random_maze():
   # # Accepted sizes: 10, 20, 30, 40, 60, 100, 120, 150, and 200
